@@ -1,0 +1,5 @@
+{
+    "name": "PING",
+    "regex": "ping",
+    "exec": "action.py"
+}

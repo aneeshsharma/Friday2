@@ -1,0 +1,5 @@
+{
+    "name": "BEEP",
+    "regex": "beep",
+    "exec": "action.py"
+}
