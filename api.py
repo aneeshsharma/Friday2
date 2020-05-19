@@ -30,7 +30,7 @@ def command():
         if data['command']:
             try:
                 inserted = task_queue.insert_one(
-                    {'command': data['command'], 'time': time.time(), 'completed': False})
+                    {'command': data['command'], 'time': time.time(), 'completed': False, 'taken': False})
                 status = True
             except Exception:
                 print(Exception)
@@ -60,6 +60,50 @@ def command():
             {'status': status, 'command': command, 'completed': completed})
         response.headers['Content-Type'] = 'application/json'
         return response
+
+
+@app.route('/complete', methods=['POST', 'GET'])
+def complete():
+    if request.method == 'POST':
+        data = request.get_json()
+        id = data['id']
+        result = data['result']
+        try:
+            task_queue.update_one({'_id': ObjectId(id)}, {
+                '$set': {'completed': True, 'result': result}})
+            response = make_response(
+                {'status': True, 'message': 'SUCCESS'})
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(
+                {'status': False, 'message': 'ERROR'})
+            response.headers['Content-Type'] = 'application/json'
+            return response
+    else:
+        id = request.args.get('id')
+        print('Deleting id - ', id)
+        try:
+            result = task_queue.find_one(
+                {'_id': ObjectId(id), 'completed': True})
+            if not result:
+                response = make_response(
+                    {'status': False, 'message': 'NO COMPLETED TASKS'})
+                response.headers['Content-Type'] = 'application/json'
+                return response
+            task_queue.delete_one(
+                {'_id': ObjectId(id), 'completed': True})
+            response = make_response(
+                {'status': True, 'result': result['result'], 'command': result['command']})
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(
+                {'status': False, 'message': 'ERROR'})
+            response.headers['Content-Type'] = 'application/json'
+            return response
 
 
 @app.route('/')

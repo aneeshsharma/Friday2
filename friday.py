@@ -15,7 +15,7 @@ print("API ready")
 
 def execute(task):
     print('Executing command ', task['command'])
-    action_db.findAndExec(task['command'])
+    action_db.findAndExec(task['command'], str(task['_id']))
     return True
 
 

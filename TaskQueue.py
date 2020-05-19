@@ -14,11 +14,12 @@ class TaskQueue:
             return
         while True:
             try:
-                doc = self.task_queue_db.find()
+                doc = self.task_queue_db.find({'taken': False})
                 for x in doc:
-                    if execute(x):
-                        self.task_queue_db.delete_one({"_id": x['_id']})
+                    self.task_queue_db.update_one(
+                        {'_id': x['_id']}, {'$set': {'taken': True}})
+                    execute(x)
             except Exception as e:
                 print(e)
                 break
-            time.sleep(1)
+            time.sleep(0.1)
