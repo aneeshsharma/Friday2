@@ -10,6 +10,8 @@ pymongo = "*"
 flask = "*"
 python-vlc = "*"
 requests = "*"
+pafy = "*"
+youtube-dl = "*"
 
 [requires]
 python_version = "3.8"

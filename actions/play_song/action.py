@@ -4,6 +4,9 @@ import time
 import subprocess as sp
 import re
 import os
+import pafy
+import vlc
+
 with open('secret.json', 'r') as secret_file:
     data = secret_file.read()
     config = json.loads(data)
@@ -22,13 +25,17 @@ def playVideo(keyword, callback=None, endcallback=None):
     video_id = getId(keyword)
 
     url = 'http://youtube.com/watch?v=' + video_id
-    print(url)
-    process = sp.Popen(['vlc', '-v', url])
+    video = pafy.new(url)
+    best = video.getbest()
+    playurl = best.url
+    player = vlc.MediaPlayer(playurl)
     if callback:
         callback()
-    process.wait()
-    if endcallback:
-        endcallback()
+    player.play()
+    time.sleep(5)
+    while player.is_playing():
+        time.sleep(1)
+    endcallback()
 
 
 def sendResult():
