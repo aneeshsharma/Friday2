@@ -1,0 +1,5 @@
+{
+    "name": "PLAY SONG",
+    "regex": "^play song",
+    "exec": "action.py"
+}

@@ -133,3 +133,6 @@ dmypy.json
 
 # rest templates
 *.rest
+
+# secret tokens
+secret.json

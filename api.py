@@ -4,6 +4,10 @@ from flask_cors import CORS, cross_origin
 import pymongo
 from bson.objectid import ObjectId
 import time
+import logging
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -83,7 +87,6 @@ def complete():
             return response
     else:
         id = request.args.get('id')
-        print('Deleting id - ', id)
         try:
             result = task_queue.find_one(
                 {'_id': ObjectId(id), 'completed': True})
@@ -92,6 +95,7 @@ def complete():
                     {'status': False, 'message': 'NO COMPLETED TASKS'})
                 response.headers['Content-Type'] = 'application/json'
                 return response
+            print('deleting id - ', id)
             task_queue.delete_one(
                 {'_id': ObjectId(id), 'completed': True})
             response = make_response(

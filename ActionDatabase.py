@@ -28,6 +28,9 @@ class ActionDatabase:
 
     def findAndExec(self, command, id):
         action = self.findTask(command)
+        if not action:
+            return False
         wd = self.action_dir + "/" + action["dir"]
-        subprocess.Popen(
-            ["/usr/bin/python3", action["config"]["exec"]], cwd=wd, env={'TASK_ID': id})
+        process = subprocess.Popen(
+            ["python3", action["config"]["exec"]], cwd=wd, env={**os.environ, 'TASK_ID': id})
+        return process

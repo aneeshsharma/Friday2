@@ -18,7 +18,9 @@ class TaskQueue:
                 for x in doc:
                     self.task_queue_db.update_one(
                         {'_id': x['_id']}, {'$set': {'taken': True}})
-                    execute(x)
+                    if not execute(x):
+                        self.task_queue_db.update_one(
+                            {'_id': x['_id']}, {'$set': {'completed': True, 'result': {'text': 'Invalid command'}}})
             except Exception as e:
                 print(e)
                 break
