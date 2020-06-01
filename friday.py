@@ -10,7 +10,7 @@ action_db = ActionDatabase("./actions")
 print("Action DB ready")
 
 print("Starting API server")
-api = sp.Popen(["/home/anish/.local/bin/flask", "run"], env={"FLASK_APP": "api.py"}, cwd='.')
+api = sp.Popen(["python3", "api.py"], cwd='.')
 print("API ready")
 
 

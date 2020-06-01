@@ -12,6 +12,7 @@ python-vlc = "*"
 requests = "*"
 pafy = "*"
 youtube-dl = "*"
+flask-cors = "*"
 
 [requires]
 python_version = "3.8"
