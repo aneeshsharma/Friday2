@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS, cross_origin
 
 import pymongo
@@ -17,16 +17,21 @@ taskdb = dbclient['friday_tasks']
 task_queue = taskdb['task_queue']
 
 
+def json_reply(reply):
+    reply = jsonify(reply)
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    return reply, 200, headers
+
+
 @app.route('/command', methods=['POST', 'GET'])
 @cross_origin()
 def command():
     if request.method == 'POST':
         print('Received command')
         if not request.is_json:
-            response = make_response(
-                {'status': False, 'message': 'INVALID DATA'})
-            response.headers['Content-Type'] = 'application/json'
-            return response
+            return json_reply({'status': False, 'message': 'INVALID DATA'})
         data = request.get_json()
         print(data)
         status = False
@@ -39,18 +44,12 @@ def command():
             except Exception:
                 print(Exception)
                 status: False
-        response = make_response(
-            {'status': status, 'inserted': str(inserted.inserted_id)})
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return json_reply({'status': status, 'inserted': str(inserted.inserted_id)})
     elif request.method == 'GET':
         print('Getting command status -')
         id = request.args.get('id')
         if not id:
-            response = make_response(
-                {'status': False, 'message': 'INVALID DATA'})
-            response.headers['Content-Type'] = 'application/json'
-            return response
+            return json_reply({'status': False, 'message': 'INVALID DATA'})
 
         command = task_queue.find_one({'_id': ObjectId(id)}, {'_id': 0})
         print(command)
@@ -60,10 +59,7 @@ def command():
             status = False
         elif ('completed' in command.keys()) and command['completed']:
             completed = True
-        response = make_response(
-            {'status': status, 'command': command, 'completed': completed})
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return json_reply({'status': status, 'command': command, 'completed': completed})
 
 
 @app.route('/complete', methods=['POST', 'GET'])
@@ -75,39 +71,29 @@ def complete():
         try:
             task_queue.update_one({'_id': ObjectId(id)}, {
                 '$set': {'completed': True, 'result': result}})
-            response = make_response(
+            return json_reply(
                 {'status': True, 'message': 'SUCCESS'})
-            response.headers['Content-Type'] = 'application/json'
-            return response
         except Exception as e:
             print(e)
-            response = make_response(
+            return json_reply(
                 {'status': False, 'message': 'ERROR'})
-            response.headers['Content-Type'] = 'application/json'
-            return response
     else:
         id = request.args.get('id')
         try:
             result = task_queue.find_one(
                 {'_id': ObjectId(id), 'completed': True})
             if not result:
-                response = make_response(
+                return json_reply(
                     {'status': False, 'message': 'NO COMPLETED TASKS'})
-                response.headers['Content-Type'] = 'application/json'
-                return response
             print('deleting id - ', id)
             task_queue.delete_one(
                 {'_id': ObjectId(id), 'completed': True})
-            response = make_response(
+            return json_reply(
                 {'status': True, 'result': result['result'], 'command': result['command']})
-            response.headers['Content-Type'] = 'application/json'
-            return response
         except Exception as e:
             print(e)
-            response = make_response(
+            return json_reply(
                 {'status': False, 'message': 'ERROR'})
-            response.headers['Content-Type'] = 'application/json'
-            return response
 
 
 @app.route('/')
