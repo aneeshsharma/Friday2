@@ -1,8 +1,6 @@
 from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS, cross_origin
 
-import pymongo
-from bson.objectid import ObjectId
 import time
 import logging
 
@@ -14,9 +12,6 @@ log.setLevel(logging.ERROR)
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
-dbclient = pymongo.MongoClient('mongodb://localhost:27017/')
-taskdb = dbclient['friday_tasks']
-task_queue = taskdb['task_queue']
 
 queue = Queue()
 
