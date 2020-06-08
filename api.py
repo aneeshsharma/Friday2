@@ -6,6 +6,8 @@ from bson.objectid import ObjectId
 import time
 import logging
 
+from Queue import Queue
+
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
@@ -15,6 +17,8 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 dbclient = pymongo.MongoClient('mongodb://localhost:27017/')
 taskdb = dbclient['friday_tasks']
 task_queue = taskdb['task_queue']
+
+queue = Queue()
 
 
 def json_reply(reply):
@@ -38,20 +42,20 @@ def command():
         inserted = None
         if data['command']:
             try:
-                inserted = task_queue.insert_one(
-                    {'command': data['command'], 'time': time.time(), 'completed': False, 'taken': False})
+                task = {'command': data['command'], 'time': time.time()}
+                id = queue.add(task)
                 status = True
-            except Exception:
-                print(Exception)
+            except Exception as e:
+                print(e)
                 status: False
-        return json_reply({'status': status, 'inserted': str(inserted.inserted_id)})
+        return json_reply({'status': status, 'inserted': str(id)})
     elif request.method == 'GET':
         print('Getting command status -')
         id = request.args.get('id')
         if not id:
             return json_reply({'status': False, 'message': 'INVALID DATA'})
 
-        command = task_queue.find_one({'_id': ObjectId(id)}, {'_id': 0})
+        command, index = queue.find(int(id))
         print(command)
         completed = False
         status = True
@@ -69,8 +73,10 @@ def complete():
         id = data['id']
         result = data['result']
         try:
-            task_queue.update_one({'_id': ObjectId(id)}, {
-                '$set': {'completed': True, 'result': result}})
+            item, index = queue.find(int(id))
+            assert item != None
+            item['result'] = result
+            queue.complete(int(id))
             return json_reply(
                 {'status': True, 'message': 'SUCCESS'})
         except Exception as e:
@@ -80,14 +86,11 @@ def complete():
     else:
         id = request.args.get('id')
         try:
-            result = task_queue.find_one(
-                {'_id': ObjectId(id), 'completed': True})
+            print('deleting id - ', id)
+            result = queue.delete_if_complete(int(id))
             if not result:
                 return json_reply(
                     {'status': False, 'message': 'NO COMPLETED TASKS'})
-            print('deleting id - ', id)
-            task_queue.delete_one(
-                {'_id': ObjectId(id), 'completed': True})
             return json_reply(
                 {'status': True, 'result': result['result'], 'command': result['command']})
         except Exception as e:
@@ -96,10 +99,16 @@ def complete():
                 {'status': False, 'message': 'ERROR'})
 
 
+@app.route('/tasks', methods=['GET'])
+def task():
+    tasks = queue.get_unprocessed()
+    return json_reply(tasks)
+
+
 @app.route('/')
 def index():
     return 'Friday!'
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

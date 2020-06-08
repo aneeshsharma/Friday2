@@ -29,6 +29,7 @@ def playVideo(keyword, callback=None, endcallback=None):
     best = video.getbest()
     playurl = best.url
     player = vlc.MediaPlayer(playurl)
+    player.audio_set_volume(100)
     if callback:
         callback()
     player.play()

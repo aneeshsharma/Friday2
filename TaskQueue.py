@@ -1,5 +1,6 @@
 import pymongo
 import time
+import requests
 
 
 class TaskQueue:
@@ -9,18 +10,17 @@ class TaskQueue:
         self.task_queue_db = taskdb['task_queue']
 
     def watch(self, execute):
+        time.sleep(5)
         if not execute:
             print('No execution function found')
             return
         while True:
             try:
-                doc = self.task_queue_db.find({'taken': False})
-                for x in doc:
-                    self.task_queue_db.update_one(
-                        {'_id': x['_id']}, {'$set': {'taken': True}})
+                tasks = requests.get('http://localhost:5000/tasks').json()
+                for x in tasks:
                     if not execute(x):
-                        self.task_queue_db.update_one(
-                            {'_id': x['_id']}, {'$set': {'completed': True, 'result': {'text': 'Invalid command'}}})
+                        requests.post(
+                            'http://localhost:5000/complete?id=' + str(x['id']))
             except Exception as e:
                 print(e)
                 break
