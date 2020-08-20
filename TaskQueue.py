@@ -1,14 +1,8 @@
-import pymongo
 import time
 import requests
 
 
 class TaskQueue:
-    def __init__(self):
-        dbclient = pymongo.MongoClient("mongodb://localhost:27017/")
-        taskdb = dbclient['friday_tasks']
-        self.task_queue_db = taskdb['task_queue']
-
     def watch(self, execute):
         time.sleep(5)
         if not execute:
